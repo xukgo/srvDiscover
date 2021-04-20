@@ -29,6 +29,6 @@ require (
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
 
-replace github.com/coreos/bbolt v1.3.4 => go.etcd.io/bbolt v1.3.4
+replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.4
 
 replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.4+incompatible

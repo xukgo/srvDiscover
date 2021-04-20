@@ -19,9 +19,9 @@ var stateLocker = new(sync.RWMutex)
 var currentNodeState = STATE_ONLINE
 
 func (this *Repo) ChangeState(state string) {
-	stateLocker.RLocker()
+	stateLocker.Lock()
 	currentNodeState = state
-	stateLocker.RUnlock()
+	stateLocker.Unlock()
 }
 
 func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc) {
@@ -121,7 +121,7 @@ func (this *Repo) fillRegMoudleInfo(info *RegisterInfo, beforeRegisterFunc Befor
 		beforeRegisterFunc(info)
 	}
 
-	stateLocker.RLocker()
+	stateLocker.RLock()
 	info.Global.State = currentNodeState
 	stateLocker.RUnlock()
 	info.Global.RefreshTimestamp(time.Now())

@@ -112,6 +112,8 @@ func (this *Repo) GetSubsNames() []string {
 	}
 	return arr
 }
+
+//只会查询online的
 func (this *Repo) GetServiceByName(name string) []*RegisterInfo {
 	this.locker.RLock()
 	defer this.locker.RUnlock()
@@ -121,7 +123,9 @@ func (this *Repo) GetServiceByName(name string) []*RegisterInfo {
 		if stringUtil.CompareIgnoreCase(srvName, name) {
 			srvInfos = make([]*RegisterInfo, 0, len(srvNodeList.NodeInfos))
 			for n := range srvNodeList.NodeInfos {
-				srvInfos = append(srvInfos, srvNodeList.NodeInfos[n].RegInfo.DeepClone())
+				if stringUtil.CompareIgnoreCase(srvNodeList.NodeInfos[n].RegInfo.Global.State, STATE_ONLINE) {
+					srvInfos = append(srvInfos, srvNodeList.NodeInfos[n].RegInfo.DeepClone())
+				}
 			}
 			break
 		}
@@ -139,39 +143,39 @@ func (this *Repo) GetRandomServiceArray(svcName string) []*RegisterInfo {
 	return infos
 }
 
-func (this *Repo) GetRandomServiceByName(name string) *RegisterInfo {
+func (this *Repo) GetRandomServiceByName(svcName string) *RegisterInfo {
 	this.locker.RLock()
 	defer this.locker.RUnlock()
 
-	for srvName, srvNodeList := range this.subsNodeCache {
-		count := len(srvNodeList.NodeInfos)
-		if stringUtil.CompareIgnoreCase(srvName, name) {
-			if count == 0 {
-				return nil
-			} else if count == 1 {
-				return srvNodeList.NodeInfos[0].RegInfo.DeepClone()
-			} else {
-				idx := randomUtil.NewInt32(0, int32(count))
-				return srvNodeList.NodeInfos[idx].RegInfo.DeepClone()
-			}
-		}
+	infos := this.GetServiceByName(svcName)
+	if len(infos) == 0 {
+		return nil
 	}
-	return nil
+
+	idx := randomUtil.NewInt32(0, int32(len(infos)))
+	return infos[idx].DeepClone()
 }
 
-func (this *Repo) GetServiceByNameAndNodeId(name string, id string) *RegisterInfo {
+func (this *Repo) GetServiceByNameAndNodeId(svcName string, id string) *RegisterInfo {
 	this.locker.RLock()
 	defer this.locker.RUnlock()
 
 	for srvName, srvNodeList := range this.subsNodeCache {
-		if srvName != name {
+		if srvName != svcName {
 			continue
 		}
+
 		nodes := srvNodeList.NodeInfos
 		for n := range nodes {
-			if nodes[n].RegInfo.Global.NodeId == id {
+			if nodes[n].RegInfo.Global.NodeId != id {
+				continue
+			}
+
+			state := nodes[n].RegInfo.Global.State
+			if stringUtil.CompareIgnoreCase(state, STATE_ONLINE) || stringUtil.CompareIgnoreCase(state, STATE_BYPASS) {
 				return srvNodeList.NodeInfos[n].RegInfo.DeepClone()
 			}
+			return nil
 		}
 	}
 	return nil

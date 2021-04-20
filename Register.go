@@ -11,8 +11,18 @@ import (
 	"context"
 	"github.com/coreos/etcd/clientv3"
 	"log"
+	"sync"
 	"time"
 )
+
+var stateLocker = new(sync.RWMutex)
+var currentNodeState = STATE_ONLINE
+
+func (this *Repo) ChangeState(state string) {
+	stateLocker.RLocker()
+	currentNodeState = state
+	stateLocker.RUnlock()
+}
 
 func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc) {
 	regOption := new(RegisterOption)
@@ -110,6 +120,9 @@ func (this *Repo) fillRegMoudleInfo(info *RegisterInfo, beforeRegisterFunc Befor
 	if beforeRegisterFunc != nil {
 		beforeRegisterFunc(info)
 	}
-	info.Global.State = "online"
+
+	stateLocker.RLocker()
+	info.Global.State = currentNodeState
+	stateLocker.RUnlock()
 	info.Global.RefreshTimestamp(time.Now())
 }

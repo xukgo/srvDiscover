@@ -38,8 +38,8 @@ type RegisterProfileInfo struct {
 
 type RegisterInfo struct {
 	Global   RegisterGlobalInfo      `json:"global"`
-	Profile  RegisterProfileInfo     `json:"profile"`
 	SvcInfos []RegisterSvcDefineConf `json:"SvcInfo"`
+	Profile  RegisterProfileInfo     `json:"profile"`
 	Private  map[string]string       `json:"private"`
 }
 

@@ -18,6 +18,14 @@ import (
 var stateLocker = new(sync.RWMutex)
 var currentNodeState = STATE_ONLINE
 
+func (this *Repo) GetState()string {
+	var res string
+	stateLocker.RLock()
+	res = currentNodeState
+	stateLocker.RUnlock()
+	return res
+}
+
 func (this *Repo) ChangeState(state string) {
 	stateLocker.Lock()
 	currentNodeState = state

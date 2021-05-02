@@ -144,9 +144,6 @@ func (this *Repo) GetRandomServiceArray(svcName string) []*RegisterInfo {
 }
 
 func (this *Repo) GetRandomServiceByName(svcName string) *RegisterInfo {
-	this.locker.RLock()
-	defer this.locker.RUnlock()
-
 	infos := this.GetServiceByName(svcName)
 	if len(infos) == 0 {
 		return nil

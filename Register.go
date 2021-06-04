@@ -48,7 +48,7 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 		lease, err = this.client.Grant(ctx, regOption.TTLSec)
 		if err != nil || lease == nil {
 			if err != nil {
-				log.Printf("client Grant error:%w\n", err)
+				log.Printf("client Grant error:%s\n", err.Error())
 			}
 			time.Sleep(time.Second)
 			continue
@@ -57,7 +57,7 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 		this.fillRegMoudleInfo(srvInfo, regOption.BeforeRegister)
 		err := this.clientUpdateLeaseContent(lease, srvInfo, regOption)
 		if err != nil {
-			log.Printf("clientUpdateLeaseContent error:%w\n", err)
+			log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
 			this.client.Lease.Close()
 			time.Sleep(time.Second)
 			continue
@@ -71,7 +71,7 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 	keepaliveChan, err := this.client.KeepAlive(context.TODO(), lease.ID) //这里需要一直不断，context不允许设置超时
 	if err != nil || keepaliveChan == nil {
 		if err != nil {
-			log.Printf("client KeepAlive error:%w\n", err)
+			log.Printf("client KeepAlive error:%s\n", err.Error())
 		}
 		time.Sleep(time.Second)
 		return
@@ -101,7 +101,7 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 			this.fillRegMoudleInfo(srvInfo, regOption.BeforeRegister)
 			err := this.clientUpdateLeaseContent(lease, srvInfo, regOption)
 			if err != nil {
-				log.Printf("clientUpdateLeaseContent error:%w\n", err)
+				log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
 				this.client.Lease.Close()
 				return
 			}
@@ -111,7 +111,7 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 	}
 }
 
-func (this *Repo) clientUpdateLeaseContent(lease *clientv3.LeaseGrantResponse, srvInfo *RegisterInfo, regOption *RegisterOption) interface{} {
+func (this *Repo) clientUpdateLeaseContent(lease *clientv3.LeaseGrantResponse, srvInfo *RegisterInfo, regOption *RegisterOption) error {
 	key := srvInfo.FormatRegisterKey(regOption.Namespace)
 	value := srvInfo.Serialize()
 	valueStr := string(value)
@@ -119,7 +119,7 @@ func (this *Repo) clientUpdateLeaseContent(lease *clientv3.LeaseGrantResponse, s
 	//fmt.Println("keep", key, valueStr)
 	_, err := this.client.Put(context.TODO(), key, valueStr, clientv3.WithLease(lease.ID))
 	if err != nil {
-		log.Printf("client put error:%w\n", err)
+		log.Printf("client put error:%s\n", err.Error())
 	}
 	return err
 }

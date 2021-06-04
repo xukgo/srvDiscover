@@ -122,7 +122,7 @@ func (this *Repo) getAll(srvName string, srvNodeList *SubSrvNodeList) error {
 	servicePrefix := fmt.Sprintf("registry.%s.%s", srvNodeList.Namespace, srvName)
 	getResponse, err := this.client.Get(context.TODO(), servicePrefix, clientv3.WithPrefix())
 	if err != nil {
-		log.Printf("client get error:%w\n", err)
+		log.Printf("client get error:%s\n", err.Error())
 		return err
 	}
 

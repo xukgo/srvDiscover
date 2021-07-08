@@ -64,6 +64,7 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 		}
 
 		this.KeepaliveLease(lease, srvInfo, regOption)
+		this.client.Close()
 	}
 }
 

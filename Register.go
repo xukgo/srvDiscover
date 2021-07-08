@@ -18,7 +18,7 @@ import (
 var stateLocker = new(sync.RWMutex)
 var currentNodeState = STATE_ONLINE
 
-func (this *Repo) GetState()string {
+func (this *Repo) GetState() string {
 	var res string
 	stateLocker.RLock()
 	res = currentNodeState
@@ -32,6 +32,14 @@ func (this *Repo) ChangeState(state string) {
 	stateLocker.Unlock()
 }
 
+// Register
+//Grante: 创建一个 lease 对象；
+//Revoke: 释放一个 lease 对象；
+//TimeToLive: 获取 lease 剩余的 TTL 时间；
+//Leases: 列举 etcd 中的所有 lease；
+//KeepAlive: 自动定时对 lease 续约；
+//KeepAliveOnce: 为 lease 续约一次，代码注释中说大部分情况下都应该使用 KeepAlive；
+//Close: 关闭当前客户端建立的所有 lease；
 func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc) {
 	regOption := new(RegisterOption)
 	*regOption = defaultRegisterOption
@@ -58,13 +66,12 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 		err := this.clientUpdateLeaseContent(lease, srvInfo, regOption)
 		if err != nil {
 			log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
-			this.client.Lease.Close()
+			this.client.Lease.Revoke(context.TODO(), lease.ID)
 			time.Sleep(time.Second)
 			continue
 		}
 
 		this.KeepaliveLease(lease, srvInfo, regOption)
-		this.client.Close()
 	}
 }
 
@@ -74,7 +81,8 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 		if err != nil {
 			log.Printf("client KeepAlive error:%s\n", err.Error())
 		}
-		time.Sleep(time.Second)
+		this.client.Lease.Revoke(context.TODO(), lease.ID)
+		time.Sleep(time.Millisecond * 100)
 		return
 	}
 
@@ -84,6 +92,7 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 		case keepaliveResponse, ok := <-keepaliveChan:
 			if !ok || keepaliveResponse == nil {
 				log.Printf("keepaliveResponse error\n")
+				this.client.Lease.Revoke(context.TODO(), lease.ID)
 				return
 			}
 			//fmt.Println("keepaliveResponse", keepaliveResponse)
@@ -103,7 +112,8 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 			err := this.clientUpdateLeaseContent(lease, srvInfo, regOption)
 			if err != nil {
 				log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
-				this.client.Lease.Close()
+				this.client.Lease.Revoke(context.TODO(), lease.ID)
+				//this.client.Lease.Close()
 				return
 			}
 

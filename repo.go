@@ -38,6 +38,7 @@ func (this *Repo) InitFromPath(path string) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 	content, err := ioutil.ReadAll(file)
 	if err != nil {
 		return err

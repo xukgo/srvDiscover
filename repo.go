@@ -56,6 +56,9 @@ func (this *Repo) InitFromPath(path string) error {
 		Endpoints:   srvConf.Endpoints,
 		DialTimeout: time.Duration(srvConf.Timeout) * time.Second,
 	})
+	if err != nil{
+		return err
+	}
 	return nil
 }
 

@@ -86,6 +86,14 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 		return
 	}
 
+	if regOption.BeforeRegister == nil{
+		for range keepaliveChan{
+		}
+		log.Printf("keepaliveChan error\n")
+		this.client.Lease.Revoke(context.TODO(), lease.ID)
+		return
+	}
+
 	timeSaved := time.Now()
 	for {
 		select {

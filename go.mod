@@ -18,8 +18,10 @@ require (
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/json-iterator/go v1.1.10
 	github.com/prometheus/client_golang v1.7.0 // indirect
+	github.com/satori/go.uuid v1.2.0
 	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966 // indirect
+	github.com/ugorji/go v1.2.6 // indirect
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xukgo/gsaber v0.0.0-20200821064145-3a3454b5a216
 	go.etcd.io/bbolt v1.3.5 // indirect

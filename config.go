@@ -10,6 +10,7 @@ package srvDiscover
 import (
 	"encoding/xml"
 	"fmt"
+	uuid "github.com/satori/go.uuid"
 	"github.com/xukgo/gsaber/utils/netUtil"
 	"strings"
 	"time"
@@ -101,6 +102,10 @@ func (this *ConfRoot) FillWithXml(data []byte) error {
 		return err
 	}
 	this.RegisterConf.Global.IP = ip
+
+	if len(this.RegisterConf.Global.NodeId) == 0{
+		this.RegisterConf.Global.NodeId = uuid.NewV1().String()
+	}
 	return err
 }
 

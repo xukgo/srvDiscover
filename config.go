@@ -93,7 +93,7 @@ func (this *ConfRoot) FillWithXml(data []byte) error {
 	if this.SubScribeConf != nil {
 		for idx := range this.SubScribeConf.Services {
 			if len(this.SubScribeConf.Services[idx].Namespace) == 0 {
-				this.SubScribeConf.Services[idx].Namespace = defaultSubscribeOption.Namespace
+				this.SubScribeConf.Services[idx].Namespace = this.RegisterConf.Namespace
 			}
 		}
 	}

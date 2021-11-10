@@ -1,5 +1,5 @@
 /**
- * @Author: zhangyw
+ * @Author: hermes
  * @Description:
  * @File:  Repo
  * @Date: 2020/5/9 10:09
@@ -9,9 +9,9 @@ package srvDiscover
 
 import (
 	"fmt"
-	"github.com/coreos/etcd/clientv3"
 	"github.com/xukgo/gsaber/utils/randomUtil"
 	"github.com/xukgo/gsaber/utils/stringUtil"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"io/ioutil"
 	"os"
 	"sync"

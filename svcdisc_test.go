@@ -6,9 +6,8 @@ import (
 )
 
 func Test_initConf(t *testing.T) {
-	return
 	repo := new(Repo)
-	err := repo.InitFromPath("/mnt/diske/GitProject/Go/dvcellar/srvDiscover/SrvDiscover.xml")
+	err := repo.InitFromPath("SrvDiscover.xml")
 	if err != nil {
 		t.FailNow()
 	}

@@ -1,5 +1,5 @@
 /**
- * @Author: zhangyw
+ * @Author: hermes
  * @Description:
  * @File:  Register
  * @Date: 2020/6/2 17:04
@@ -9,7 +9,7 @@ package srvDiscover
 
 import (
 	"context"
-	"github.com/coreos/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
 	"sync"
 	"time"

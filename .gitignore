@@ -2,3 +2,6 @@
 *.exe
 *\.tar
 *.log
+
+go_build_*
+*.test

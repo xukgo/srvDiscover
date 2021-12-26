@@ -1,5 +1,5 @@
 /**
- * @Author: zhangyw
+ * @Author: hermes
  * @Description:
  * @File:  SubScribe
  * @Date: 2020/6/2 17:04
@@ -10,8 +10,8 @@ package srvDiscover
 import (
 	"context"
 	"fmt"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
 	"strings"
 	"time"
@@ -46,9 +46,9 @@ type SubscribeOption struct {
 	Namespace string
 }
 
-var defaultSubscribeOption SubscribeOption = SubscribeOption{
-	Namespace: "voice",
-}
+//var defaultSubscribeOption SubscribeOption = SubscribeOption{
+//	Namespace: "voice",
+//}
 
 type SubscribeOptionFunc func(subscribeOp *SubscribeOption)
 
@@ -79,7 +79,7 @@ func (this *Repo) SubScribe(subSrvInfos []SubBasicInfo, subcribeOptions ...Subsc
 	}
 
 	subcribeOp := new(SubscribeOption)
-	*subcribeOp = defaultSubscribeOption
+	//*subcribeOp = defaultSubscribeOption
 
 	for _, op := range subcribeOptions {
 		op(subcribeOp)

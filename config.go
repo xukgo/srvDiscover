@@ -22,6 +22,8 @@ go mod edit -replace google.golang.org/grpc@v1.29.1=google.golang.org/grpc@v1.26
 */
 type ConfRoot struct {
 	XMLName       xml.Name
+	Username      string         `xml:"Username"`       //
+	Password      string         `xml:"Password"`       //
 	Timeout       int            `xml:"Timeout"`        //etcd连接超时时间,单秒秒
 	Endpoints     []string       `xml:"Endpoints>Addr"` //etcd服务器地址, 172.16.0.212:2379
 	RegisterConf  *RegisterConf  `xml:"Register"`
@@ -74,6 +76,8 @@ func (this *ConfRoot) FillWithXml(data []byte) error {
 		return err
 	}
 
+	this.Username = strings.TrimSpace(this.Username)
+	this.Password = strings.TrimSpace(this.Password)
 	//反序列化后的处理
 	if this.Timeout <= 0 {
 		this.Timeout = 2
@@ -93,7 +97,7 @@ func (this *ConfRoot) FillWithXml(data []byte) error {
 	if this.SubScribeConf != nil {
 		for idx := range this.SubScribeConf.Services {
 			if len(this.SubScribeConf.Services[idx].Namespace) == 0 {
-				this.SubScribeConf.Services[idx].Namespace = defaultSubscribeOption.Namespace
+				this.SubScribeConf.Services[idx].Namespace = this.RegisterConf.Namespace
 			}
 		}
 	}
@@ -103,7 +107,7 @@ func (this *ConfRoot) FillWithXml(data []byte) error {
 	}
 	this.RegisterConf.Global.IP = ip
 
-	if len(this.RegisterConf.Global.NodeId) == 0{
+	if len(this.RegisterConf.Global.NodeId) == 0 {
 		this.RegisterConf.Global.NodeId = uuid.NewV1().String()
 	}
 	return err

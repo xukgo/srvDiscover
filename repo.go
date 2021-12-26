@@ -1,5 +1,5 @@
 /**
- * @Author: zhangyw
+ * @Author: hermes
  * @Description:
  * @File:  Repo
  * @Date: 2020/5/9 10:09
@@ -9,9 +9,9 @@ package srvDiscover
 
 import (
 	"fmt"
-	"github.com/coreos/etcd/clientv3"
 	"github.com/xukgo/gsaber/utils/randomUtil"
 	"github.com/xukgo/gsaber/utils/stringUtil"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -33,6 +33,27 @@ type Repo struct {
 	licWatchFunc     func(*LicResultInfo)
 }
 
+func (this *Repo) SetLocalIP(ip string) {
+	this.config.RegisterConf.Global.IP = ip
+}
+
+//func (this *Repo) SetEndPoints(endpoints []string) {
+//	this.config.Endpoints = endpoints
+//}
+//func (this *Repo) InitClient() error {
+//	var err error
+//	this.client, err = clientv3.New(clientv3.Config{
+//		Username:    this.config.Username,
+//		Password:    this.config.Password,
+//		Endpoints:   this.config.Endpoints,
+//		DialTimeout: time.Duration(this.config.Timeout) * time.Second,
+//	})
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
+
 func (this *Repo) InitFromPath(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
@@ -51,12 +72,13 @@ func (this *Repo) InitFromPath(path string) error {
 	}
 
 	this.config = srvConf
-
 	this.client, err = clientv3.New(clientv3.Config{
-		Endpoints:   srvConf.Endpoints,
-		DialTimeout: time.Duration(srvConf.Timeout) * time.Second,
+		Username:    this.config.Username,
+		Password:    this.config.Password,
+		Endpoints:   this.config.Endpoints,
+		DialTimeout: time.Duration(this.config.Timeout) * time.Second,
 	})
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	return nil

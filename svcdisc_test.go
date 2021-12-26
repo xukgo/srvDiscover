@@ -11,6 +11,10 @@ func Test_initConf(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
+	err = repo.InitClient()
+	if err != nil {
+		t.FailNow()
+	}
 	err = repo.StartRegister(nil)
 	if err != nil {
 		t.FailNow()

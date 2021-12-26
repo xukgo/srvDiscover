@@ -33,6 +33,27 @@ type Repo struct {
 	licWatchFunc     func(*LicResultInfo)
 }
 
+func (this *Repo) SetLocalIP(ip string) {
+	this.config.RegisterConf.Global.IP = ip
+}
+
+//func (this *Repo) SetEndPoints(endpoints []string) {
+//	this.config.Endpoints = endpoints
+//}
+//func (this *Repo) InitClient() error {
+//	var err error
+//	this.client, err = clientv3.New(clientv3.Config{
+//		Username:    this.config.Username,
+//		Password:    this.config.Password,
+//		Endpoints:   this.config.Endpoints,
+//		DialTimeout: time.Duration(this.config.Timeout) * time.Second,
+//	})
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
+
 func (this *Repo) InitFromPath(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
@@ -51,12 +72,11 @@ func (this *Repo) InitFromPath(path string) error {
 	}
 
 	this.config = srvConf
-
 	this.client, err = clientv3.New(clientv3.Config{
-		Username:    srvConf.Username,
-		Password:    srvConf.Password,
-		Endpoints:   srvConf.Endpoints,
-		DialTimeout: time.Duration(srvConf.Timeout) * time.Second,
+		Username:    this.config.Username,
+		Password:    this.config.Password,
+		Endpoints:   this.config.Endpoints,
+		DialTimeout: time.Duration(this.config.Timeout) * time.Second,
 	})
 	if err != nil {
 		return err

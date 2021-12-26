@@ -1,4 +1,6 @@
 <SrvDiscover>
+    <Username></Username>
+    <Password></Password>
     <!-- 连接超时, 单位秒   -->
     <Timeout>2</Timeout>
     <!-- 服务发现服务器地址列表   -->

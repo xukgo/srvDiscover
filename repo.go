@@ -53,10 +53,12 @@ func (this *Repo) InitFromPath(path string) error {
 	this.config = srvConf
 
 	this.client, err = clientv3.New(clientv3.Config{
+		Username:    srvConf.Username,
+		Password:    srvConf.Password,
 		Endpoints:   srvConf.Endpoints,
 		DialTimeout: time.Duration(srvConf.Timeout) * time.Second,
 	})
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	return nil

@@ -1,20 +1,23 @@
 package srvDiscover
 
 import (
+	"os"
 	"testing"
 	"time"
 )
 
 func Test_initConf(t *testing.T) {
+	fi, err := os.Open("SrvDiscover.xml")
+	if err != nil {
+		t.FailNow()
+	}
+
 	repo := new(Repo)
-	err := repo.InitFromPath("SrvDiscover.xml")
+	err = repo.InitFromReader(fi)
 	if err != nil {
 		t.FailNow()
 	}
-	err = repo.InitClient()
-	if err != nil {
-		t.FailNow()
-	}
+
 	err = repo.StartRegister(nil)
 	if err != nil {
 		t.FailNow()

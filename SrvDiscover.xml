@@ -14,7 +14,7 @@
         <!--注册轮询周期, 单位秒, 默认2-->
          <Interval>2</Interval>
         <!--注册的命名空间, 默认voice-->
-         <Namespace>coin</Namespace>
+         <Namespace>voice</Namespace>
         <Global>
             <!-- 注册的服务名称, 必填 -->
             <Name>CallCenter</Name>

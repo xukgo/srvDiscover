@@ -11,6 +11,7 @@ func Test_initConf(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
+	defer fi.Close()
 
 	repo := new(Repo)
 	err = repo.InitFromReader(fi)

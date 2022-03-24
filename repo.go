@@ -12,8 +12,7 @@ import (
 	"github.com/xukgo/gsaber/utils/randomUtil"
 	"github.com/xukgo/gsaber/utils/stringUtil"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"io/ioutil"
-	"os"
+	"io"
 	"sync"
 	"time"
 )
@@ -37,6 +36,10 @@ func (this *Repo) SetLocalIP(ip string) {
 	this.config.RegisterConf.Global.IP = ip
 }
 
+func (this *Repo) SetNodeID(id string) {
+	this.config.RegisterConf.Global.NodeId = id
+}
+
 //func (this *Repo) SetEndPoints(endpoints []string) {
 //	this.config.Endpoints = endpoints
 //}
@@ -54,13 +57,8 @@ func (this *Repo) SetLocalIP(ip string) {
 //	return nil
 //}
 
-func (this *Repo) InitFromPath(path string) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	content, err := ioutil.ReadAll(file)
+func (this *Repo) InitFromReader(srcReader io.Reader) error {
+	content, err := io.ReadAll(srcReader)
 	if err != nil {
 		return err
 	}

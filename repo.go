@@ -8,11 +8,13 @@
 package srvDiscover
 
 import (
+	"context"
 	"fmt"
 	"github.com/xukgo/gsaber/utils/randomUtil"
 	"github.com/xukgo/gsaber/utils/stringUtil"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"io"
+	"sort"
 	"sync"
 	"time"
 )
@@ -99,6 +101,23 @@ func (this *Repo) StartRegister(beforeRegisterFunc BeforeRegisterFunc) error {
 
 	go this.Register(srvInfo, registerOp...)
 	return nil
+}
+
+func (this *Repo) GetPrefixKvs(prefix string) ([]Ekv, error) {
+	if len(prefix) == 0 {
+		prefix = "registry."
+	}
+	response, err := this.client.Get(context.TODO(), prefix, clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	list := make([]Ekv, 0, len(response.Kvs))
+	for _, kv := range response.Kvs {
+		list = append(list, InitEkv(kv.Key, kv.Value))
+	}
+	vs := Ekvs(list)
+	sort.Sort(vs)
+	return vs, nil
 }
 
 func (this *Repo) StartSubscribe() error {

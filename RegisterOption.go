@@ -14,7 +14,7 @@ type RegisterOption struct {
 // 注册提供的默认值
 var defaultRegisterOption RegisterOption = RegisterOption{
 	TTLSec:         6,
-	Namespace:      "voice",
+	Namespace:      DEFAULT_NAMESPACE,
 	BeforeRegister: nil,
 	AlwaysUpdate:   true,
 	Interval:       2 * time.Second,

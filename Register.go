@@ -62,7 +62,7 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 			continue
 		}
 
-		this.fillRegMoudleInfo(srvInfo, regOption.BeforeRegister)
+		this.fillRegModuleInfo(srvInfo, regOption.BeforeRegister)
 		err := this.clientUpdateLeaseContent(lease, srvInfo, regOption)
 		if err != nil {
 			log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
@@ -86,8 +86,8 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 		return
 	}
 
-	if regOption.BeforeRegister == nil{
-		for range keepaliveChan{
+	if regOption.BeforeRegister == nil {
+		for range keepaliveChan {
 		}
 		log.Printf("keepaliveChan error\n")
 		this.client.Lease.Revoke(context.TODO(), lease.ID)
@@ -116,7 +116,7 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 				continue
 			}
 
-			this.fillRegMoudleInfo(srvInfo, regOption.BeforeRegister)
+			this.fillRegModuleInfo(srvInfo, regOption.BeforeRegister)
 			err := this.clientUpdateLeaseContent(lease, srvInfo, regOption)
 			if err != nil {
 				log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
@@ -143,7 +143,7 @@ func (this *Repo) clientUpdateLeaseContent(lease *clientv3.LeaseGrantResponse, s
 	return err
 }
 
-func (this *Repo) fillRegMoudleInfo(info *RegisterInfo, beforeRegisterFunc BeforeRegisterFunc) {
+func (this *Repo) fillRegModuleInfo(info *RegisterInfo, beforeRegisterFunc BeforeRegisterFunc) {
 	if beforeRegisterFunc != nil {
 		beforeRegisterFunc(info)
 	}

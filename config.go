@@ -16,10 +16,8 @@ import (
 	"time"
 )
 
-/*
-go mod edit -replace github.com/coreos/bbolt@v1.3.4=go.etcd.io/bbolt@v1.3.4
-go mod edit -replace google.golang.org/grpc@v1.29.1=google.golang.org/grpc@v1.26.0
-*/
+const DEFAULT_NAMESPACE = "voice"
+
 type ConfRoot struct {
 	XMLName       xml.Name
 	Username      string         `xml:"Username"`       //
@@ -83,37 +81,44 @@ func (this *ConfRoot) FillWithXml(data []byte) error {
 		this.Timeout = 2
 	}
 
-	this.RegisterConf.Namespace = strings.TrimSpace(this.RegisterConf.Namespace)
-	if len(this.RegisterConf.Namespace) == 0 {
-		this.RegisterConf.Namespace = defaultRegisterOption.Namespace
-	}
-	if this.RegisterConf.TTL == 0 {
-		this.RegisterConf.TTL = int(defaultRegisterOption.TTLSec)
-	}
-	if this.RegisterConf.Interval == 0 {
-		this.RegisterConf.Interval = int(defaultRegisterOption.Interval / time.Second)
+	if this.RegisterConf != nil {
+		this.RegisterConf.Namespace = strings.TrimSpace(this.RegisterConf.Namespace)
+		if len(this.RegisterConf.Namespace) == 0 {
+			this.RegisterConf.Namespace = defaultRegisterOption.Namespace
+		}
+		if this.RegisterConf.TTL == 0 {
+			this.RegisterConf.TTL = int(defaultRegisterOption.TTLSec)
+		}
+		if this.RegisterConf.Interval == 0 {
+			this.RegisterConf.Interval = int(defaultRegisterOption.Interval / time.Second)
+		}
+
+		ip, err := convertRegisterIP(this.RegisterConf.Global.IPString)
+		if err != nil {
+			return err
+		}
+		this.RegisterConf.Global.IP = ip
+		if len(this.RegisterConf.Global.NodeId) == 0 {
+			this.RegisterConf.Global.NodeId = uuid.NewV1().String()
+		}
 	}
 
 	if this.SubScribeConf != nil {
 		for idx := range this.SubScribeConf.Services {
 			if len(this.SubScribeConf.Services[idx].Namespace) == 0 {
-				this.SubScribeConf.Services[idx].Namespace = this.RegisterConf.Namespace
+				if this.RegisterConf != nil {
+					this.SubScribeConf.Services[idx].Namespace = this.RegisterConf.Namespace
+				} else {
+					this.SubScribeConf.Services[idx].Namespace = DEFAULT_NAMESPACE
+				}
 			}
 		}
 	}
-	ip, err := convertRegisteIP(this.RegisterConf.Global.IPString)
-	if err != nil {
-		return err
-	}
-	this.RegisterConf.Global.IP = ip
 
-	if len(this.RegisterConf.Global.NodeId) == 0 {
-		this.RegisterConf.Global.NodeId = uuid.NewV1().String()
-	}
 	return err
 }
 
-func convertRegisteIP(ipString string) (string, error) {
+func convertRegisterIP(ipString string) (string, error) {
 	arr := strings.Split(ipString, ":")
 	var filterArr []string
 	if len(arr) == 1 {

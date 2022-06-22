@@ -5,7 +5,7 @@
     <Timeout>2</Timeout>
     <!-- 服务发现服务器地址列表   -->
     <Endpoints>
-        <Addr>xx.xx.xx.xx:2379</Addr>
+        <Addr>172.16.2.13:2479</Addr>
     </Endpoints>
 
     <Register>

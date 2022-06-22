@@ -19,6 +19,8 @@ import (
 	"time"
 )
 
+//./etcdctl --endpoints=172.16.2.13:2479 get --prefix registry.voice
+
 //const DEFAULT_CONN_TIMEOUT = 1500
 
 type Repo struct {

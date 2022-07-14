@@ -159,17 +159,17 @@ func (this *Repo) GetSubsNames() []string {
 }
 
 //只会查询online的
-func (this *Repo) GetServiceByName(name string) []*RegisterInfo {
+func (this *Repo) GetServiceByName(name string) []RegisterInfo {
 	this.locker.RLock()
 	defer this.locker.RUnlock()
 
-	var srvInfos []*RegisterInfo = nil
+	var srvInfos []RegisterInfo = nil
 	for srvName, srvNodeList := range this.subsNodeCache {
 		if stringUtil.CompareIgnoreCase(srvName, name) {
-			srvInfos = make([]*RegisterInfo, 0, len(srvNodeList.NodeInfos))
+			srvInfos = make([]RegisterInfo, 0, len(srvNodeList.NodeInfos))
 			for n := range srvNodeList.NodeInfos {
 				if stringUtil.CompareIgnoreCase(srvNodeList.NodeInfos[n].RegInfo.Global.State, STATE_ONLINE) {
-					srvInfos = append(srvInfos, srvNodeList.NodeInfos[n].RegInfo.DeepClone())
+					srvInfos = append(srvInfos, srvNodeList.NodeInfos[n].RegInfo.DeepClone(false))
 				}
 			}
 			break
@@ -178,7 +178,7 @@ func (this *Repo) GetServiceByName(name string) []*RegisterInfo {
 	return srvInfos
 }
 
-func (this *Repo) GetRandomServiceArray(svcName string) []*RegisterInfo {
+func (this *Repo) GetRandomServiceArray(svcName string) []RegisterInfo {
 	infos := this.GetServiceByName(svcName)
 	if len(infos) == 0 {
 		return nil
@@ -188,17 +188,17 @@ func (this *Repo) GetRandomServiceArray(svcName string) []*RegisterInfo {
 	return infos
 }
 
-func (this *Repo) GetRandomServiceByName(svcName string) *RegisterInfo {
+func (this *Repo) GetRandomServiceByName(svcName string) (bool, RegisterInfo) {
 	infos := this.GetServiceByName(svcName)
 	if len(infos) == 0 {
-		return nil
+		return false, RegisterInfo{}
 	}
 
 	idx := randomUtil.NewInt32(0, int32(len(infos)))
-	return infos[idx].DeepClone()
+	return true, infos[idx].DeepClone(false)
 }
 
-func (this *Repo) GetServiceByNameAndNodeId(svcName string, id string) *RegisterInfo {
+func (this *Repo) GetServiceByNameAndNodeId(svcName string, id string) (bool, RegisterInfo) {
 	this.locker.RLock()
 	defer this.locker.RUnlock()
 
@@ -215,12 +215,12 @@ func (this *Repo) GetServiceByNameAndNodeId(svcName string, id string) *Register
 
 			state := nodes[n].RegInfo.Global.State
 			if stringUtil.CompareIgnoreCase(state, STATE_ONLINE) || stringUtil.CompareIgnoreCase(state, STATE_BYPASS) {
-				return srvNodeList.NodeInfos[n].RegInfo.DeepClone()
+				return true, srvNodeList.NodeInfos[n].RegInfo.DeepClone(false)
 			}
-			return nil
+			return false, RegisterInfo{}
 		}
 	}
-	return nil
+	return false, RegisterInfo{}
 }
 
 func (this *Repo) initSubsNodeCache(subSrvInfos []SubBasicInfo) {
@@ -239,7 +239,7 @@ func (this *Repo) initSubsNodeCache(subSrvInfos []SubBasicInfo) {
 }
 
 //随机打乱数组
-func randomSortSlice(arr []*RegisterInfo) {
+func randomSortSlice(arr []RegisterInfo) {
 	if len(arr) <= 0 || len(arr) == 1 {
 		return
 	}

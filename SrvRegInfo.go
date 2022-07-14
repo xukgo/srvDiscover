@@ -66,24 +66,14 @@ func (this *RegisterInfo) UniqueId() string {
 	return md5Str
 }
 
-func (this *RegisterInfo) DeepClone() *RegisterInfo {
-	model := new(RegisterInfo)
-	model.Global = this.Global
-	model.Profile = this.Profile
-	model.SvcInfos = this.SvcInfos
+func (this *RegisterInfo) DeepClone(privateCopy bool) RegisterInfo {
+	model := RegisterInfo{
+		Global:   this.Global,
+		Profile:  this.Profile,
+		SvcInfos: this.SvcInfos,
+	}
 
-	//if this.SvcInfos == nil {
-	//	model.SvcInfos = nil
-	//} else {
-	//	model.SvcInfos = make([]RegisterSvcDefineConf, 0, len(this.SvcInfos))
-	//	for idx := range this.SvcInfos {
-	//		model.SvcInfos = append(model.SvcInfos, *this.SvcInfos[idx].DeepClone())
-	//	}
-	//}
-
-	if this.Private == nil {
-		model.Private = nil
-	} else {
+	if privateCopy && len(this.Private) > 0 {
 		model.Private = make(map[string]string)
 		for key, value := range this.Private {
 			model.Private[key] = value

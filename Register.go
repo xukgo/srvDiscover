@@ -12,11 +12,13 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 var stateLocker = new(sync.RWMutex)
 var currentNodeState = STATE_ONLINE
+var updateRegisterAction int32 = 0
 
 func (this *Repo) GetState() string {
 	var res string
@@ -29,17 +31,18 @@ func (this *Repo) GetState() string {
 func (this *Repo) ChangeState(state string) {
 	stateLocker.Lock()
 	currentNodeState = state
+	atomic.StoreInt32(&updateRegisterAction, 1)
 	stateLocker.Unlock()
 }
 
 // Register
-//Grante: 创建一个 lease 对象；
-//Revoke: 释放一个 lease 对象；
-//TimeToLive: 获取 lease 剩余的 TTL 时间；
-//Leases: 列举 etcd 中的所有 lease；
-//KeepAlive: 自动定时对 lease 续约；
-//KeepAliveOnce: 为 lease 续约一次，代码注释中说大部分情况下都应该使用 KeepAlive；
-//Close: 关闭当前客户端建立的所有 lease；
+// Grante: 创建一个 lease 对象；
+// Revoke: 释放一个 lease 对象；
+// TimeToLive: 获取 lease 剩余的 TTL 时间；
+// Leases: 列举 etcd 中的所有 lease；
+// KeepAlive: 自动定时对 lease 续约；
+// KeepAliveOnce: 为 lease 续约一次，代码注释中说大部分情况下都应该使用 KeepAlive；
+// Close: 关闭当前客户端建立的所有 lease；
 func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc) {
 	regOption := new(RegisterOption)
 	*regOption = defaultRegisterOption
@@ -86,13 +89,13 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 		return
 	}
 
-	if regOption.BeforeRegister == nil {
-		for range keepaliveChan {
-		}
-		log.Printf("keepaliveChan error\n")
-		this.client.Lease.Revoke(context.TODO(), lease.ID)
-		return
-	}
+	//if regOption.BeforeRegister == nil {
+	//	for range keepaliveChan {
+	//	}
+	//	log.Printf("keepaliveChan error\n")
+	//	this.client.Lease.Revoke(context.TODO(), lease.ID)
+	//	return
+	//}
 
 	timeSaved := time.Now()
 	for {
@@ -106,14 +109,19 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 			//fmt.Println("keepaliveResponse", keepaliveResponse)
 			break
 		default:
-			if !regOption.AlwaysUpdate {
-				time.Sleep(1000 * time.Millisecond)
-				continue
-			}
+			//强制更新操作，则不进入常规判断，直接更新
+			if atomic.LoadInt32(&updateRegisterAction) > 0 {
+				atomic.StoreInt32(&updateRegisterAction, 0)
+			} else {
+				if !regOption.AlwaysUpdate {
+					time.Sleep(1000 * time.Millisecond)
+					continue
+				}
 
-			if time.Since(timeSaved) < regOption.Interval {
-				time.Sleep(100 * time.Millisecond)
-				continue
+				if time.Since(timeSaved) < regOption.Interval {
+					time.Sleep(200 * time.Millisecond)
+					continue
+				}
 			}
 
 			this.fillRegModuleInfo(srvInfo, regOption.BeforeRegister)

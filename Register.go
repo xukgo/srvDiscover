@@ -17,7 +17,7 @@ import (
 )
 
 var stateLocker = new(sync.RWMutex)
-var currentNodeState = STATE_ONLINE
+var currentNodeState = STATE_NOTREADY
 var updateRegisterAction int32 = 0
 
 func (this *Repo) GetState() string {

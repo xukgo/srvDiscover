@@ -38,12 +38,14 @@ type RegisterConf struct {
 }
 
 type RegisterGlobalConf struct {
-	Name     string `xml:"Name"`
-	State    string `xml:"State"`
-	NodeId   string `xml:"NodeId"`
-	Version  string `xml:"Version"`
-	IPString string `xml:"IP"`
-	IP       string `xml:"-"`
+	Name            string `xml:"Name"`
+	State           string `xml:"State"`
+	NodeId          string `xml:"NodeId"`
+	Version         string `xml:"Version"`
+	PrivateIPString string `xml:"PrivateIP"`
+	PrivateIP       string `xml:"-"`
+	PublicIPString  string `xml:"PublicIP"`
+	PublicIP        string `xml:"-"`
 }
 
 type RegisterSvcDefineConf struct {
@@ -93,11 +95,19 @@ func (this *ConfRoot) FillWithXml(data []byte) error {
 			this.RegisterConf.Interval = int(defaultRegisterOption.Interval / time.Second)
 		}
 
-		ip, err := convertRegisterIP(this.RegisterConf.Global.IPString)
+		//PrivateIP
+		ip, err := convertRegisterIP(this.RegisterConf.Global.PrivateIPString)
 		if err != nil {
 			return err
 		}
-		this.RegisterConf.Global.IP = ip
+		this.RegisterConf.Global.PrivateIP = ip
+
+		//PublicIP
+		ip, err = convertRegisterIP(this.RegisterConf.Global.PublicIPString)
+		if err == nil {
+			this.RegisterConf.Global.PublicIP = ip
+		}
+
 		if len(this.RegisterConf.Global.NodeId) == 0 {
 			this.RegisterConf.Global.NodeId = uuid.NewV1().String()
 		}
@@ -166,7 +176,7 @@ func (this *ConfRoot) GetRegisterModule() (*RegisterInfo, error) {
 	if len(register.Global.Version) == 0 {
 		return nil, fmt.Errorf("register global.version is empty")
 	}
-	if len(register.Global.IP) == 0 {
+	if len(register.Global.PrivateIP) == 0 {
 		return nil, fmt.Errorf("register global.ip is empty")
 	}
 
@@ -174,7 +184,7 @@ func (this *ConfRoot) GetRegisterModule() (*RegisterInfo, error) {
 	srvInfo.Global.Name = register.Global.Name
 	srvInfo.Global.NodeId = register.Global.NodeId
 	srvInfo.Global.Version = register.Global.Version
-	srvInfo.Global.IP = register.Global.IP
+	srvInfo.Global.IP = register.Global.PrivateIP
 	srvInfo.Global.State = register.Global.State
 
 	srvInfo.SvcInfos = register.SvcInfos

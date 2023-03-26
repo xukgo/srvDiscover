@@ -36,8 +36,12 @@ type Repo struct {
 	licWatchFunc     func(*LicResultInfo)
 }
 
-func (this *Repo) SetLocalIP(ip string) {
-	this.config.RegisterConf.Global.IP = ip
+func (this *Repo) SetPrivateIP(ip string) {
+	this.config.RegisterConf.Global.PrivateIP = ip
+}
+
+func (this *Repo) SetPublicIP(ip string) {
+	this.config.RegisterConf.Global.PublicIP = ip
 }
 
 func (this *Repo) SetNodeID(id string) {
@@ -158,7 +162,7 @@ func (this *Repo) GetSubsNames() []string {
 	return arr
 }
 
-//只会查询online的
+// 只会查询online的
 func (this *Repo) GetServiceByName(name string) []RegisterInfo {
 	this.locker.RLock()
 	defer this.locker.RUnlock()
@@ -178,6 +182,45 @@ func (this *Repo) GetServiceByName(name string) []RegisterInfo {
 	return srvInfos
 }
 
+func (this *Repo) GetFilterServices(name string, filterFunc func(*SrvNodeInfo) bool) []RegisterInfo {
+	this.locker.RLock()
+	defer this.locker.RUnlock()
+
+	var srvInfos []RegisterInfo = nil
+	for srvName, srvNodeList := range this.subsNodeCache {
+		if stringUtil.CompareIgnoreCase(srvName, name) {
+			srvInfos = make([]RegisterInfo, 0, len(srvNodeList.NodeInfos))
+			for n := range srvNodeList.NodeInfos {
+				if filterFunc(srvNodeList.NodeInfos[n]) {
+					srvInfos = append(srvInfos, srvNodeList.NodeInfos[n].RegInfo.DeepClone(false))
+				}
+				//if stringUtil.CompareIgnoreCase(srvNodeList.NodeInfos[n].RegInfo.Global.State, STATE_ONLINE) {
+				//	srvInfos = append(srvInfos, srvNodeList.NodeInfos[n].RegInfo.DeepClone(false))
+				//}
+			}
+			break
+		}
+	}
+	return srvInfos
+}
+
+func (this *Repo) GetFilterServiceCount(name string, filterFunc func(*SrvNodeInfo) bool) int {
+	this.locker.RLock()
+	defer this.locker.RUnlock()
+
+	var count = 0
+	for srvName, srvNodeList := range this.subsNodeCache {
+		if stringUtil.CompareIgnoreCase(srvName, name) {
+			for n := range srvNodeList.NodeInfos {
+				if filterFunc(srvNodeList.NodeInfos[n]) {
+					count++
+				}
+			}
+			break
+		}
+	}
+	return count
+}
 func (this *Repo) GetRandomServiceArray(svcName string) []RegisterInfo {
 	infos := this.GetServiceByName(svcName)
 	if len(infos) == 0 {
@@ -238,7 +281,7 @@ func (this *Repo) initSubsNodeCache(subSrvInfos []SubBasicInfo) {
 	}
 }
 
-//随机打乱数组
+// 随机打乱数组
 func randomSortSlice(arr []RegisterInfo) {
 	if len(arr) <= 0 || len(arr) == 1 {
 		return

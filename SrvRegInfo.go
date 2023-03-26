@@ -9,6 +9,7 @@ package srvDiscover
 
 import (
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/xukgo/gsaber/utils/stringUtil"
@@ -40,10 +41,10 @@ type RegisterInfo struct {
 	Global   RegisterGlobalInfo      `json:"global"`
 	SvcInfos []RegisterSvcDefineConf `json:"SvcInfo"`
 	Profile  RegisterProfileInfo     `json:"profile"`
-	Private  map[string]string       `json:"private"`
+	Private  json.RawMessage         `json:"private"`
 }
 
-func (this RegisterInfo) FormatRegisterKey(namespace string) string {
+func (this *RegisterInfo) FormatRegisterKey(namespace string) string {
 	key := fmt.Sprintf("registry.%s.%s.%s", namespace, this.GetServiceName(), this.UniqueId())
 	return key
 }
@@ -74,15 +75,12 @@ func (this *RegisterInfo) DeepClone(privateCopy bool) RegisterInfo {
 	}
 
 	if privateCopy && len(this.Private) > 0 {
-		model.Private = make(map[string]string)
-		for key, value := range this.Private {
-			model.Private[key] = value
-		}
+		model.Private = this.Private
 	}
 	return model
 }
 
-func (this RegisterInfo) GetSvcInfo(name string) *RegisterSvcDefineConf {
+func (this *RegisterInfo) GetSvcInfo(name string) *RegisterSvcDefineConf {
 	for idx := range this.SvcInfos {
 		if stringUtil.CompareIgnoreCase(this.SvcInfos[idx].Name, name) {
 			return &this.SvcInfos[idx]
@@ -91,7 +89,7 @@ func (this RegisterInfo) GetSvcInfo(name string) *RegisterSvcDefineConf {
 	return nil
 }
 
-func (this RegisterInfo) GetPort(name string, defaultPort int) int {
+func (this *RegisterInfo) GetPort(name string, defaultPort int) int {
 	for idx := range this.SvcInfos {
 		if stringUtil.CompareIgnoreCase(this.SvcInfos[idx].Name, name) {
 			return this.SvcInfos[idx].Port

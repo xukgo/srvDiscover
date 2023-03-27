@@ -184,7 +184,8 @@ func (this *ConfRoot) GetRegisterModule() (*RegisterInfo, error) {
 	srvInfo.Global.Name = register.Global.Name
 	srvInfo.Global.NodeId = register.Global.NodeId
 	srvInfo.Global.Version = register.Global.Version
-	srvInfo.Global.IP = register.Global.PrivateIP
+	srvInfo.Global.PrivateIp = register.Global.PrivateIP
+	srvInfo.Global.PublicIP = register.Global.PublicIP
 	srvInfo.Global.State = register.Global.State
 
 	srvInfo.SvcInfos = register.SvcInfos

@@ -21,7 +21,8 @@ type RegisterGlobalInfo struct {
 	State     string `json:"state"`
 	NodeId    string `json:"nodeId"`
 	Version   string `json:"version"`
-	IP        string `json:"ip"`
+	PrivateIp string `json:"privateIP"`
+	PublicIP  string `json:"publicIP"`
 	Timestamp string `json:"timestamp"`
 }
 
@@ -63,7 +64,7 @@ func (this *RegisterInfo) GetServiceName() string {
 }
 
 func (this *RegisterInfo) UniqueId() string {
-	md5Str := fmt.Sprintf("%x", md5.Sum([]byte(this.Global.IP+this.Global.NodeId)))
+	md5Str := fmt.Sprintf("%x", md5.Sum([]byte(this.Global.PrivateIp+this.Global.NodeId)))
 	return md5Str
 }
 

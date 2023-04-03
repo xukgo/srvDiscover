@@ -173,7 +173,7 @@ func (this *Repo) GetServiceByName(name string) []RegisterInfo {
 			srvInfos = make([]RegisterInfo, 0, len(srvNodeList.NodeInfos))
 			for n := range srvNodeList.NodeInfos {
 				if stringUtil.CompareIgnoreCase(srvNodeList.NodeInfos[n].RegInfo.Global.State, STATE_ONLINE) {
-					srvInfos = append(srvInfos, srvNodeList.NodeInfos[n].RegInfo.DeepClone(false))
+					srvInfos = append(srvInfos, srvNodeList.NodeInfos[n].RegInfo.DeepClone(true))
 				}
 			}
 			break
@@ -192,7 +192,7 @@ func (this *Repo) GetFilterServices(name string, filterFunc func(*SrvNodeInfo) b
 			srvInfos = make([]RegisterInfo, 0, len(srvNodeList.NodeInfos))
 			for n := range srvNodeList.NodeInfos {
 				if filterFunc(srvNodeList.NodeInfos[n]) {
-					srvInfos = append(srvInfos, srvNodeList.NodeInfos[n].RegInfo.DeepClone(false))
+					srvInfos = append(srvInfos, srvNodeList.NodeInfos[n].RegInfo.DeepClone(true))
 				}
 				//if stringUtil.CompareIgnoreCase(srvNodeList.NodeInfos[n].RegInfo.Global.State, STATE_ONLINE) {
 				//	srvInfos = append(srvInfos, srvNodeList.NodeInfos[n].RegInfo.DeepClone(false))

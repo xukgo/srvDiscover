@@ -16,7 +16,7 @@ var defaultRegisterOption RegisterOption = RegisterOption{
 	TTLSec:         6,
 	Namespace:      DEFAULT_NAMESPACE,
 	BeforeRegister: nil,
-	AlwaysUpdate:   true,
+	AlwaysUpdate:   false,
 	Interval:       2 * time.Second,
 	ConnTimeout:    2 * time.Second,
 }

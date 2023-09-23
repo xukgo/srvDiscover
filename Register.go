@@ -110,15 +110,10 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 	timeSaved := time.Now()
 	for {
 		select {
-		case keepaliveResponse, ok := <-keepaliveChan:
-			if !ok || keepaliveResponse == nil {
-				//log.Printf("keepaliveResponse error\n")
-				//regOption.ResultCallback(fmt.Errorf("keepaliveChan Response error"))
-				//connCtx, _ = context.WithTimeout(context.TODO(), time.Second*2)
-				//_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
-				//return
+		case keepaliveResponse := <-keepaliveChan:
+			if keepaliveResponse != nil {
+				//todo handler keepaliveResponse
 			}
-			//fmt.Println("keepaliveResponse", keepaliveResponse)
 			break
 		default:
 			//强制更新操作，则不进入常规判断，直接更新

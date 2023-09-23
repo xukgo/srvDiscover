@@ -90,7 +90,7 @@ func (this *Repo) InitFromReader(srcReader io.Reader) error {
 	return nil
 }
 
-func (this *Repo) StartRegister(beforeRegisterFunc BeforeRegisterFunc) error {
+func (this *Repo) StartRegister(beforeRegisterFunc BeforeRegisterFunc, resultCallback RegisterResultCallback) error {
 	if this.config == nil {
 		return fmt.Errorf("register conf is nil")
 	}
@@ -98,6 +98,11 @@ func (this *Repo) StartRegister(beforeRegisterFunc BeforeRegisterFunc) error {
 	registerOp := this.config.GetRegisterOptionFuncs()
 	if beforeRegisterFunc != nil {
 		registerOp = append(registerOp, WithBeforeRegister(beforeRegisterFunc))
+	}
+	if resultCallback != nil {
+		registerOp = append(registerOp, WithRegisterResultCallback(resultCallback))
+	} else {
+		registerOp = append(registerOp, WithRegisterResultCallback(func(err error) {}))
 	}
 
 	srvInfo, err := this.config.GetRegisterModule()

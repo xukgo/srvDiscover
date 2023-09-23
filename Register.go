@@ -9,6 +9,7 @@ package srvDiscover
 
 import (
 	"context"
+	"fmt"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
 	"sync"
@@ -46,7 +47,7 @@ func (this *Repo) ChangeState(state string) {
 // KeepAlive: 自动定时对 lease 续约；
 // KeepAliveOnce: 为 lease 续约一次，代码注释中说大部分情况下都应该使用 KeepAlive；
 // Close: 关闭当前客户端建立的所有 lease；
-func (this *Repo) Register(srvInfo *RegisterInfo, resultCallback RegisterResultCallback, options ...RegisterOptionFunc) {
+func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc) {
 	regOption := new(RegisterOption)
 	*regOption = defaultRegisterOption
 
@@ -64,7 +65,7 @@ func (this *Repo) Register(srvInfo *RegisterInfo, resultCallback RegisterResultC
 			if err != nil {
 				log.Printf("client Grant error:%s\n", err.Error())
 			}
-			resultCallback(false)
+			regOption.ResultCallback(fmt.Errorf("client Grant error:%w", err))
 			time.Sleep(time.Second)
 			continue
 		}
@@ -73,23 +74,23 @@ func (this *Repo) Register(srvInfo *RegisterInfo, resultCallback RegisterResultC
 		err := this.clientUpdateLeaseContent(lease, srvInfo, regOption)
 		if err != nil {
 			log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
-			resultCallback(false)
+			regOption.ResultCallback(fmt.Errorf("clientUpdateLeaseContent error:%w", err))
 			this.client.Lease.Revoke(context.TODO(), lease.ID)
 			time.Sleep(time.Second)
 			continue
 		}
 
-		this.KeepaliveLease(lease, srvInfo, regOption, resultCallback)
+		this.KeepaliveLease(lease, srvInfo, regOption)
 	}
 }
 
-func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *RegisterInfo, regOption *RegisterOption, resultCallback RegisterResultCallback) {
+func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *RegisterInfo, regOption *RegisterOption) {
 	keepaliveChan, err := this.client.KeepAlive(context.TODO(), lease.ID) //这里需要一直不断，context不允许设置超时
 	if err != nil || keepaliveChan == nil {
 		if err != nil {
 			log.Printf("client KeepAlive error:%s\n", err.Error())
 		}
-		resultCallback(false)
+		regOption.ResultCallback(fmt.Errorf("client KeepAlive error:%w", err))
 		this.client.Lease.Revoke(context.TODO(), lease.ID)
 		time.Sleep(time.Millisecond * 100)
 		return
@@ -109,7 +110,7 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 		case keepaliveResponse, ok := <-keepaliveChan:
 			if !ok || keepaliveResponse == nil {
 				log.Printf("keepaliveResponse error\n")
-				resultCallback(false)
+				regOption.ResultCallback(fmt.Errorf("keepaliveChan Response error"))
 				this.client.Lease.Revoke(context.TODO(), lease.ID)
 				return
 			}
@@ -121,13 +122,13 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 				atomic.StoreInt32(&updateRegisterAction, 0)
 			} else {
 				if !regOption.AlwaysUpdate {
-					resultCallback(true)
+					regOption.ResultCallback(nil)
 					time.Sleep(1000 * time.Millisecond)
 					continue
 				}
 
 				if time.Since(timeSaved) < regOption.Interval {
-					resultCallback(true)
+					regOption.ResultCallback(nil)
 					time.Sleep(200 * time.Millisecond)
 					continue
 				}
@@ -137,13 +138,13 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 			err := this.clientUpdateLeaseContent(lease, srvInfo, regOption)
 			if err != nil {
 				log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
-				resultCallback(false)
+				regOption.ResultCallback(fmt.Errorf("clientUpdateLeaseContent error:%w", err))
 				this.client.Lease.Revoke(context.TODO(), lease.ID)
 				//this.client.Lease.Close()
 				return
 			}
 
-			resultCallback(true)
+			regOption.ResultCallback(nil)
 			timeSaved = time.Now()
 		}
 	}

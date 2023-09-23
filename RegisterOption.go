@@ -6,6 +6,7 @@ type RegisterOption struct {
 	TTLSec         int64
 	Namespace      string
 	BeforeRegister BeforeRegisterFunc
+	ResultCallback RegisterResultCallback
 	AlwaysUpdate   bool
 	Interval       time.Duration
 	ConnTimeout    time.Duration
@@ -22,7 +23,7 @@ var defaultRegisterOption RegisterOption = RegisterOption{
 }
 
 type RegisterOptionFunc func(registerOp *RegisterOption)
-type RegisterResultCallback func(bool)
+type RegisterResultCallback func(err error)
 
 func WithTTL(ttlSec int64) RegisterOptionFunc {
 	return func(option *RegisterOption) {
@@ -62,6 +63,11 @@ func WithRegisterConnTimeout(timeout time.Duration) RegisterOptionFunc {
 		if option.ConnTimeout <= 0 {
 			option.ConnTimeout = defaultRegisterOption.ConnTimeout
 		}
+	}
+}
+func WithRegisterResultCallback(callback RegisterResultCallback) RegisterOptionFunc {
+	return func(option *RegisterOption) {
+		option.ResultCallback = callback
 	}
 }
 

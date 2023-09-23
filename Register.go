@@ -111,9 +111,13 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 	for {
 		select {
 		case keepaliveResponse := <-keepaliveChan:
-			if keepaliveResponse != nil {
-				//todo handler keepaliveResponse
+			if keepaliveResponse == nil {
+				regOption.ResultCallback(fmt.Errorf("keepalive channle closed"))
+				connCtx, _ := context.WithTimeout(context.TODO(), time.Second*2)
+				_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
+				return
 			}
+			//fmt.Println("keepaliveResponse", keepaliveResponse)
 			break
 		default:
 			//强制更新操作，则不进入常规判断，直接更新

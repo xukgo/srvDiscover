@@ -22,6 +22,7 @@ var defaultRegisterOption RegisterOption = RegisterOption{
 }
 
 type RegisterOptionFunc func(registerOp *RegisterOption)
+type RegisterResultCallback func(bool)
 
 func WithTTL(ttlSec int64) RegisterOptionFunc {
 	return func(option *RegisterOption) {

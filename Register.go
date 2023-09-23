@@ -46,7 +46,7 @@ func (this *Repo) ChangeState(state string) {
 // KeepAlive: 自动定时对 lease 续约；
 // KeepAliveOnce: 为 lease 续约一次，代码注释中说大部分情况下都应该使用 KeepAlive；
 // Close: 关闭当前客户端建立的所有 lease；
-func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc) {
+func (this *Repo) Register(srvInfo *RegisterInfo, resultCallback RegisterResultCallback, options ...RegisterOptionFunc) {
 	regOption := new(RegisterOption)
 	*regOption = defaultRegisterOption
 
@@ -64,6 +64,7 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 			if err != nil {
 				log.Printf("client Grant error:%s\n", err.Error())
 			}
+			resultCallback(false)
 			time.Sleep(time.Second)
 			continue
 		}
@@ -72,21 +73,23 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 		err := this.clientUpdateLeaseContent(lease, srvInfo, regOption)
 		if err != nil {
 			log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
+			resultCallback(false)
 			this.client.Lease.Revoke(context.TODO(), lease.ID)
 			time.Sleep(time.Second)
 			continue
 		}
 
-		this.KeepaliveLease(lease, srvInfo, regOption)
+		this.KeepaliveLease(lease, srvInfo, regOption, resultCallback)
 	}
 }
 
-func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *RegisterInfo, regOption *RegisterOption) {
+func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *RegisterInfo, regOption *RegisterOption, resultCallback RegisterResultCallback) {
 	keepaliveChan, err := this.client.KeepAlive(context.TODO(), lease.ID) //这里需要一直不断，context不允许设置超时
 	if err != nil || keepaliveChan == nil {
 		if err != nil {
 			log.Printf("client KeepAlive error:%s\n", err.Error())
 		}
+		resultCallback(false)
 		this.client.Lease.Revoke(context.TODO(), lease.ID)
 		time.Sleep(time.Millisecond * 100)
 		return
@@ -106,6 +109,7 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 		case keepaliveResponse, ok := <-keepaliveChan:
 			if !ok || keepaliveResponse == nil {
 				log.Printf("keepaliveResponse error\n")
+				resultCallback(false)
 				this.client.Lease.Revoke(context.TODO(), lease.ID)
 				return
 			}
@@ -117,11 +121,13 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 				atomic.StoreInt32(&updateRegisterAction, 0)
 			} else {
 				if !regOption.AlwaysUpdate {
+					resultCallback(true)
 					time.Sleep(1000 * time.Millisecond)
 					continue
 				}
 
 				if time.Since(timeSaved) < regOption.Interval {
+					resultCallback(true)
 					time.Sleep(200 * time.Millisecond)
 					continue
 				}
@@ -131,11 +137,13 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 			err := this.clientUpdateLeaseContent(lease, srvInfo, regOption)
 			if err != nil {
 				log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
+				resultCallback(false)
 				this.client.Lease.Revoke(context.TODO(), lease.ID)
 				//this.client.Lease.Close()
 				return
 			}
 
+			resultCallback(true)
 			timeSaved = time.Now()
 		}
 	}

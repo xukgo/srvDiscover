@@ -86,14 +86,14 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 }
 
 func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *RegisterInfo, regOption *RegisterOption) {
-	connCtx, _ := context.WithTimeout(context.TODO(), regOption.ConnTimeout)
-	keepaliveChan, err := this.client.KeepAlive(connCtx, lease.ID) //这里需要一直不断，context不允许设置超时
+	//connCtx, _ := context.WithTimeout(context.TODO(), regOption.ConnTimeout)
+	keepaliveChan, err := this.client.KeepAlive(context.TODO(), lease.ID) //这里需要一直不断，context不允许设置超时
 	if err != nil || keepaliveChan == nil {
 		if err != nil {
 			log.Printf("client KeepAlive error:%s\n", err.Error())
 		}
 		regOption.ResultCallback(fmt.Errorf("client KeepAlive error:%w", err))
-		connCtx, _ = context.WithTimeout(context.TODO(), time.Second*2)
+		connCtx, _ := context.WithTimeout(context.TODO(), time.Second*2)
 		_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
 		time.Sleep(time.Millisecond * 100)
 		return
@@ -112,11 +112,11 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 		select {
 		case keepaliveResponse, ok := <-keepaliveChan:
 			if !ok || keepaliveResponse == nil {
-				log.Printf("keepaliveResponse error\n")
-				regOption.ResultCallback(fmt.Errorf("keepaliveChan Response error"))
-				connCtx, _ = context.WithTimeout(context.TODO(), time.Second*2)
-				_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
-				return
+				//log.Printf("keepaliveResponse error\n")
+				//regOption.ResultCallback(fmt.Errorf("keepaliveChan Response error"))
+				//connCtx, _ = context.WithTimeout(context.TODO(), time.Second*2)
+				//_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
+				//return
 			}
 			//fmt.Println("keepaliveResponse", keepaliveResponse)
 			break
@@ -143,7 +143,7 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 			if err != nil {
 				log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
 				regOption.ResultCallback(fmt.Errorf("clientUpdateLeaseContent error:%w", err))
-				connCtx, _ = context.WithTimeout(context.TODO(), time.Second*2)
+				connCtx, _ := context.WithTimeout(context.TODO(), time.Second*2)
 				_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
 				//this.client.Lease.Close()
 				return

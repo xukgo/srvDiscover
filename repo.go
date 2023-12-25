@@ -36,6 +36,10 @@ type Repo struct {
 	licWatchFunc     func(*LicResultInfo)
 }
 
+func (this *Repo) GetEtcdClient() *clientv3.Client {
+	return this.client
+}
+
 func (this *Repo) SetPrivateIP(ip string) {
 	this.config.RegisterConf.Global.PrivateIP = ip
 }

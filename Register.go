@@ -112,13 +112,13 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 		select {
 		case keepaliveResponse := <-keepaliveChan:
 			if keepaliveResponse == nil {
-				regOption.ResultCallback(fmt.Errorf("keepalive channle closed"))
-				connCtx, _ := context.WithTimeout(context.TODO(), time.Second*2)
-				_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
-				return
+				regOption.ResultCallback(fmt.Errorf("keepalive channle recv nil"))
+				//connCtx, _ := context.WithTimeout(context.TODO(), time.Second*2)
+				//_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
+			} else {
+				fmt.Printf("keepalive channle recv:%v\n", keepaliveResponse)
 			}
-			//fmt.Println("keepaliveResponse", keepaliveResponse)
-			break
+			continue
 		default:
 			//强制更新操作，则不进入常规判断，直接更新
 			if atomic.LoadInt32(&updateRegisterAction) > 0 {

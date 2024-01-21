@@ -115,6 +115,7 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 				regOption.ResultCallback(fmt.Errorf("keepalive channle recv nil"))
 				//connCtx, _ := context.WithTimeout(context.TODO(), time.Second*2)
 				//_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
+				return
 			} else {
 				fmt.Printf("keepalive channle recv:%v\n", keepaliveResponse)
 			}

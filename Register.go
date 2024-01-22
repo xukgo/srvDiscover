@@ -120,6 +120,7 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 				return
 			}
 			//renewal success, continue
+			regOption.ResultCallback(nil)
 			continue
 		default:
 			//强制更新操作，则不进入常规判断，直接更新
@@ -127,13 +128,13 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 				atomic.StoreInt32(&updateRegisterAction, 0)
 			} else {
 				if !regOption.AlwaysUpdate {
-					regOption.ResultCallback(nil)
+					//regOption.ResultCallback(nil)
 					time.Sleep(1000 * time.Millisecond)
 					continue
 				}
 
 				if time.Since(timeSaved) < regOption.Interval {
-					regOption.ResultCallback(nil)
+					//regOption.ResultCallback(nil)
 					time.Sleep(200 * time.Millisecond)
 					continue
 				}

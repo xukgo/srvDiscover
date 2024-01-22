@@ -19,7 +19,7 @@ func Test_initConf(t *testing.T) {
 		t.FailNow()
 	}
 
-	err = repo.StartRegister(nil)
+	err = repo.StartRegister(nil, nil)
 	if err != nil {
 		t.FailNow()
 	}

@@ -34,6 +34,10 @@ type Repo struct {
 	licLocker        sync.RWMutex
 	licPrivkey       string
 	licWatchFunc     func(*LicResultInfo)
+
+	//predefine
+	preDefRegisterVersion string
+	preDefSubsVerDict     map[string]string
 }
 
 func (this *Repo) GetEtcdClient() *clientv3.Client {
@@ -50,6 +54,13 @@ func (this *Repo) SetPublicIP(ip string) {
 
 func (this *Repo) SetNodeID(id string) {
 	this.config.RegisterConf.Global.NodeId = id
+}
+
+func (this *Repo) PreDefineRegisterVersion(ver string) {
+	this.preDefRegisterVersion = ver
+}
+func (this *Repo) AddPreDefineSubsVersion(svcName string, ver string) {
+	this.preDefSubsVerDict[svcName] = ver
 }
 
 //func (this *Repo) SetEndPoints(endpoints []string) {
@@ -82,6 +93,8 @@ func (this *Repo) InitFromReader(srcReader io.Reader) error {
 	}
 
 	this.config = srvConf
+	this.replacePredefRegisterVersion()
+	this.replacePredefSubsVersion()
 	this.client, err = clientv3.New(clientv3.Config{
 		Username:    this.config.Username,
 		Password:    this.config.Password,
@@ -287,6 +300,25 @@ func (this *Repo) initSubsNodeCache(subSrvInfos []SubBasicInfo) {
 		srvNodeList.SubBasicInfo = *NewSubSrvBasicInfo(subSrvInfos[m].Name, subSrvInfos[m].Version, subSrvInfos[m].Namespace)
 		srvNodeList.NodeInfos = make([]*SrvNodeInfo, 0, 1)
 		this.subsNodeCache[subSrvInfos[m].Name] = srvNodeList
+	}
+}
+
+func (this *Repo) replacePredefRegisterVersion() {
+	if len(this.preDefRegisterVersion) > 0 {
+		this.config.RegisterConf.Global.Version = this.preDefRegisterVersion
+	}
+}
+
+func (this *Repo) replacePredefSubsVersion() {
+	if len(this.preDefSubsVerDict) == 0 || this.config.SubScribeConf == nil {
+		return
+	}
+	for name, ver := range this.preDefSubsVerDict {
+		index := this.config.SubScribeConf.GetIndexByName(name)
+		if index < 0 {
+			continue
+		}
+		this.config.SubScribeConf.Services[index].Version = ver
 	}
 }
 

@@ -70,6 +70,15 @@ type SubscribeConf struct {
 	Services []SubscribeSrvConf `xml:"Service"`
 }
 
+func (c *SubscribeConf) GetIndexByName(name string) int {
+	for idx := range c.Services {
+		if strings.EqualFold(c.Services[idx].Name, name) {
+			return idx
+		}
+	}
+	return -1
+}
+
 func (this *ConfRoot) FillWithXml(data []byte) error {
 	err := xml.Unmarshal(data, this)
 	if err != nil {

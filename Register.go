@@ -81,6 +81,7 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 			continue
 		}
 
+		//block here until recv error
 		this.KeepaliveLease(lease, srvInfo, regOption)
 	}
 }
@@ -111,14 +112,14 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 	for {
 		select {
 		case keepaliveResponse := <-keepaliveChan:
+			//if recv nil, lease is expired
 			if keepaliveResponse == nil {
-				regOption.ResultCallback(fmt.Errorf("keepalive channle recv nil"))
+				regOption.ResultCallback(fmt.Errorf("keepalive channle recv nil,lease is expired"))
 				//connCtx, _ := context.WithTimeout(context.TODO(), time.Second*2)
 				//_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
 				return
-			} else {
-				fmt.Printf("keepalive channle recv:%v\n", keepaliveResponse)
 			}
+			//renewal success, continue
 			continue
 		default:
 			//强制更新操作，则不进入常规判断，直接更新

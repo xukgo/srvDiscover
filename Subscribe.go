@@ -61,13 +61,15 @@ type SubscribeOptionFunc func(subscribeOp *SubscribeOption)
 /*
 key格式： d9cloud.communication.SwitchServer/172.16.0.214/1602
 先watch, 然后get全部一次，根据每个key的ModRevision进行更新
-	watch的结果
- 		PUT		只有ModRevision大于缓存里的，或者缓存里没有 才更新
-		DELETE  只有ModRevision大于缓存里的， 才删除
-	get全部结果
-		get结果中，ModRevision大于缓存里的，更新
-		get结果中，在缓存里没有的， 更新
-		缓存有，get结果中没有的，删除
+
+		watch的结果
+	 		PUT		只有ModRevision大于缓存里的，或者缓存里没有 才更新
+			DELETE  只有ModRevision大于缓存里的， 才删除
+		get全部结果
+			get结果中，ModRevision大于缓存里的，更新
+			get结果中，在缓存里没有的， 更新
+			缓存有，get结果中没有的，删除
+
 watch的更新和get全部的更新 需要加锁
 
 watch的channel失败后，需要重新get全部一次
@@ -184,7 +186,6 @@ func upsertNodeList(kv *mvccpb.KeyValue, srvNodeList *SubSrvNodeList) {
 	key := string(kv.Key)
 	valueBytes := kv.Value
 	modRevision := kv.ModRevision
-
 	for idx := range srvNodeList.NodeInfos {
 		info := srvNodeList.NodeInfos[idx]
 		if !checkKeyMatchNodeInfo(key, info.CacheUniqueId) {
@@ -214,7 +215,12 @@ func upsertNodeList(kv *mvccpb.KeyValue, srvNodeList *SubSrvNodeList) {
 	}
 	newInfo.ModRevision = modRevision
 	newInfo.CacheUniqueId = newInfo.RegInfo.UniqueId()
+
+	if len(srvNodeList.Version) > 0 && newInfo.RegInfo.Global.Version != srvNodeList.Version {
+		return
+	}
 	srvNodeList.NodeInfos = append(srvNodeList.NodeInfos, newInfo)
+	fmt.Printf("add node %s %s\n", newInfo.RegInfo.Global.Name, newInfo.RegInfo.Global.Version)
 }
 
 func arrayKeyMatchUniqueId(array []string, id string) (index int) {

@@ -104,6 +104,7 @@ func (this *Repo) InitFromReader(srcReader io.Reader) error {
 		return err
 	}
 
+	this.preDefSubsVerDict = make(map[string]string, 4)
 	this.config = srvConf
 	this.replacePredefRegisterVersion()
 	this.replacePredefSubsVersion()

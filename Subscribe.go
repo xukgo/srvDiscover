@@ -121,7 +121,7 @@ func (this *Repo) watchSubs(srvName string, srvNodeList *SubSrvNodeList, subscri
 }
 
 func (this *Repo) getAll(srvName string, srvNodeList *SubSrvNodeList) error {
-	servicePrefix := fmt.Sprintf("registry.%s.%s", srvNodeList.Namespace, srvName)
+	servicePrefix := fmt.Sprintf("/registry.%s.%s", srvNodeList.Namespace, srvName)
 	getResponse, err := this.client.Get(context.TODO(), servicePrefix, clientv3.WithPrefix())
 	if err != nil {
 		log.Printf("client get error:%s\n", err.Error())
@@ -241,7 +241,7 @@ func checkKeyMatchNodeInfo(key string, id string) bool {
 func (this *Repo) PrintAll() {
 	this.locker.Lock()
 	for srvName, srvNodeList := range this.subsNodeCache {
-		fmt.Printf("-------------------- srv:%s len:%d\n", srvName, len(srvNodeList.NodeInfos))
+		fmt.Printf("-------------------- srv:%s ver:%s len:%d\n", srvName, srvNodeList.Version, len(srvNodeList.NodeInfos))
 		for _, node := range srvNodeList.NodeInfos {
 			jsonBytes := node.RegInfo.Serialize()
 			fmt.Println(node.ModRevision, node.CacheUniqueId, string(jsonBytes))

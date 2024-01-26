@@ -133,7 +133,7 @@ func (this *Repo) StartRegister(beforeRegisterFunc BeforeRegisterFunc, resultCal
 
 func (this *Repo) GetPrefixKvs(prefix string) ([]Ekv, error) {
 	if len(prefix) == 0 {
-		prefix = "registry."
+		prefix = "/registry."
 	}
 	response, err := this.client.Get(context.TODO(), prefix, clientv3.WithPrefix())
 	if err != nil {

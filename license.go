@@ -60,7 +60,7 @@ func (this *LicResultInfo) DecryptJson(data []byte, privKey string) error {
 	return jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(plainText, this)
 }
 
-const LIC_RESULT_KEY = "lic.result"
+const LIC_RESULT_KEY = "/lic.result"
 
 func (this *Repo) GetLicResult() *Result {
 	this.licLocker.RLock()

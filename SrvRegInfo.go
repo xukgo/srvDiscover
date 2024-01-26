@@ -46,7 +46,7 @@ type RegisterInfo struct {
 }
 
 func (this *RegisterInfo) FormatRegisterKey(namespace string) string {
-	key := fmt.Sprintf("registry.%s.%s.%s", namespace, this.GetServiceName(), this.UniqueId())
+	key := fmt.Sprintf("/registry.%s.%s.%s", namespace, this.GetServiceName(), this.UniqueId())
 	return key
 }
 

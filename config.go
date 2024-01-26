@@ -18,6 +18,12 @@ import (
 
 const DEFAULT_NAMESPACE = "voice"
 
+type PredefEndpoint struct {
+	Endpoints []string
+	UserName  string
+	Password  string
+}
+
 type ConfRoot struct {
 	XMLName       xml.Name
 	Username      string         `xml:"Username"`       //

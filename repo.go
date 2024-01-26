@@ -36,6 +36,7 @@ type Repo struct {
 	licWatchFunc     func(*LicResultInfo)
 
 	//predefine
+	predefEndpoint        *PredefEndpoint
 	preDefRegisterVersion string
 	preDefSubsVerDict     map[string]string
 }
@@ -56,6 +57,9 @@ func (this *Repo) SetNodeID(id string) {
 	this.config.RegisterConf.Global.NodeId = id
 }
 
+func (this *Repo) WithPredefEndpoint(s *PredefEndpoint) {
+	this.predefEndpoint = s
+}
 func (this *Repo) PreDefineRegisterVersion(ver string) {
 	this.preDefRegisterVersion = ver
 }
@@ -80,14 +84,22 @@ func (this *Repo) AddPreDefineSubsVersion(svcName string, ver string) {
 //	return nil
 //}
 
-func (this *Repo) InitFromReader(srcReader io.Reader) error {
+func ConfigUnmarshalFromReader(srcReader io.Reader) (*ConfRoot, error) {
 	content, err := io.ReadAll(srcReader)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	srvConf := new(ConfRoot)
 	err = srvConf.FillWithXml(content)
+	if err != nil {
+		return nil, err
+	}
+	return srvConf, nil
+}
+
+func (this *Repo) InitFromReader(srcReader io.Reader) error {
+	srvConf, err := ConfigUnmarshalFromReader(srcReader)
 	if err != nil {
 		return err
 	}
@@ -303,6 +315,13 @@ func (this *Repo) initSubsNodeCache(subSrvInfos []SubBasicInfo) {
 	}
 }
 
+func (this *Repo) replacePredefEndpoints() {
+	if this.predefEndpoint != nil {
+		this.config.Endpoints = this.predefEndpoint.Endpoints
+		this.config.Username = this.predefEndpoint.UserName
+		this.config.Password = this.predefEndpoint.Password
+	}
+}
 func (this *Repo) replacePredefRegisterVersion() {
 	if len(this.preDefRegisterVersion) > 0 {
 		this.config.RegisterConf.Global.Version = this.preDefRegisterVersion

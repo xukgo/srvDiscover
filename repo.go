@@ -108,6 +108,7 @@ func (this *Repo) InitFromReader(srcReader io.Reader) error {
 	}
 
 	this.config = srvConf
+	this.replacePredefEndpoints()
 	this.replacePredefRegisterVersion()
 	this.replacePredefSubsVersion()
 	this.client, err = clientv3.New(clientv3.Config{

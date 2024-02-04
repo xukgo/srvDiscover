@@ -94,7 +94,7 @@ func (this *Repo) SubScribe(subSrvInfos []SubBasicInfo, subcribeOptions ...Subsc
 }
 
 func (this *Repo) watchSubs(srvName string, srvNodeList *SubSrvNodeList, subscribeOp *SubscribeOption) {
-	servicePrefix := fmt.Sprintf("registry.%s.%s", srvNodeList.Namespace, srvName)
+	servicePrefix := fmt.Sprintf("/registry.%s.%s", srvNodeList.Namespace, srvName)
 
 	for {
 		watchChan := this.client.Watch(clientv3.WithRequireLeader(context.TODO()), servicePrefix, clientv3.WithPrefix())
@@ -113,6 +113,13 @@ func (this *Repo) watchSubs(srvName string, srvNodeList *SubSrvNodeList, subscri
 
 		//fmt.Println("watch begin ...")
 		for watchResponse := range watchChan {
+			if watchResponse.Err() != nil {
+				log.Printf("watch event error:%s\n", watchResponse.Err())
+				this.client.Watcher.Close()
+				time.Sleep(time.Second)
+				break
+			}
+
 			this.updateByEvents(srvNodeList, watchResponse.Events)
 		}
 		//watchChan被关闭

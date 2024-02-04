@@ -11,6 +11,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	uuid "github.com/satori/go.uuid"
+	"github.com/xukgo/gsaber/utils/arrayUtil"
 	"github.com/xukgo/gsaber/utils/netUtil"
 	"strings"
 	"time"
@@ -126,6 +127,8 @@ func (this *ConfRoot) FillWithXml(data []byte) error {
 		if len(this.RegisterConf.Global.NodeId) == 0 {
 			this.RegisterConf.Global.NodeId = uuid.NewV1().String()
 		}
+
+		this.Endpoints = arrayUtil.StringsTrimSpaceFilterEmpty(this.Endpoints)
 	}
 
 	if this.SubScribeConf != nil {

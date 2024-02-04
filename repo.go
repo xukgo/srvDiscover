@@ -64,6 +64,9 @@ func (this *Repo) PreDefineRegisterVersion(ver string) {
 	this.preDefRegisterVersion = ver
 }
 func (this *Repo) AddPreDefineSubsVersion(svcName string, ver string) {
+	if this.preDefSubsVerDict == nil {
+		this.preDefSubsVerDict = make(map[string]string, 4)
+	}
 	this.preDefSubsVerDict[svcName] = ver
 }
 
@@ -105,6 +108,7 @@ func (this *Repo) InitFromReader(srcReader io.Reader) error {
 	}
 
 	this.config = srvConf
+	this.replacePredefEndpoints()
 	this.replacePredefRegisterVersion()
 	this.replacePredefSubsVersion()
 	this.client, err = clientv3.New(clientv3.Config{

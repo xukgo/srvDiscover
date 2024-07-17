@@ -9,11 +9,15 @@ package srvDiscover
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"github.com/xukgo/gsaber/utils/fileUtil"
 	"github.com/xukgo/gsaber/utils/randomUtil"
 	"github.com/xukgo/gsaber/utils/stringUtil"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"io"
+	"os"
 	"sort"
 	"sync"
 	"time"
@@ -111,16 +115,95 @@ func (this *Repo) InitFromReader(srcReader io.Reader) error {
 	this.replacePredefEndpoints()
 	this.replacePredefRegisterVersion()
 	this.replacePredefSubsVersion()
-	this.client, err = clientv3.New(clientv3.Config{
+
+	tlsConfig, err := this.initTlsConfig()
+	if err != nil {
+		return err
+	}
+	clicfg := clientv3.Config{
 		Username:    this.config.Username,
 		Password:    this.config.Password,
 		Endpoints:   this.config.Endpoints,
 		DialTimeout: time.Duration(this.config.Timeout) * time.Second,
-	})
+		TLS:         tlsConfig,
+	}
+	this.client, err = clientv3.New(clicfg)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (this *Repo) initTlsConfig() (*tls.Config, error) {
+	tlsConf := this.config.ClientTls
+	if tlsConf == nil {
+		return nil, nil
+	}
+	// 加载CA证书
+	caCert, err := os.ReadFile(fileUtil.GetAbsUrl(tlsConf.CaFilePath))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CA cert: %v", err)
+	}
+
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCert) {
+		return nil, fmt.Errorf("failed to append CA cert to pool")
+	}
+
+	// 加载客户端证书和密钥
+	clientCert, err := tls.LoadX509KeyPair(fileUtil.GetAbsUrl(tlsConf.CertFilePath), fileUtil.GetAbsUrl(tlsConf.KeyFilePath))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load client cert and key: %v", err)
+	}
+
+	// Custom CA validation logic to skip IP SAN check
+	customVerify := func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+		cert, err := x509.ParseCertificate(rawCerts[0])
+		if err != nil {
+			return err
+		}
+
+		intermediates := x509.NewCertPool()
+		for _, ic := range rawCerts[1:] {
+			intermediateCert, err := x509.ParseCertificate(ic)
+			if err != nil {
+				return err
+			}
+			intermediates.AddCert(intermediateCert)
+		}
+
+		opts := x509.VerifyOptions{
+			Roots:         caCertPool,
+			Intermediates: intermediates,
+		}
+
+		chains, err := cert.Verify(opts)
+		if err != nil {
+			return err
+		}
+		_ = chains
+
+		// Optional: Further verify certificate attributes here
+		// For example, verifying the Common Name
+		//for _, chain := range chains {
+		//	for _, c := range chain {
+		//		if !strings.HasPrefix(c.Subject.CommonName, "etcd") {
+		//			return fmt.Errorf("unexpected common name: %s", c.Subject.CommonName)
+		//		}
+		//	}
+		//}
+
+		return nil
+	}
+
+	// 手动创建 tls.Config
+	tlsConfig := &tls.Config{
+		Certificates:          []tls.Certificate{clientCert},
+		RootCAs:               caCertPool,
+		InsecureSkipVerify:    true, // Skip the default verification
+		VerifyPeerCertificate: customVerify,
+	}
+	return tlsConfig, nil
 }
 
 func (this *Repo) StartRegister(beforeRegisterFunc BeforeRegisterFunc, resultCallback RegisterResultCallback) error {

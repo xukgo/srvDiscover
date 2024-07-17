@@ -27,12 +27,19 @@ type PredefEndpoint struct {
 
 type ConfRoot struct {
 	XMLName       xml.Name
-	Username      string         `xml:"Username"`       //
-	Password      string         `xml:"Password"`       //
-	Timeout       int            `xml:"Timeout"`        //etcd连接超时时间,单秒秒
-	Endpoints     []string       `xml:"Endpoints>Addr"` //etcd服务器地址, 172.16.0.212:2379
-	RegisterConf  *RegisterConf  `xml:"Register"`
-	SubScribeConf *SubscribeConf `xml:"Subscribe"`
+	Username      string           `xml:"Username"`       //
+	Password      string           `xml:"Password"`       //
+	Timeout       int              `xml:"Timeout"`        //etcd连接超时时间,单秒秒
+	Endpoints     []string         `xml:"Endpoints>Addr"` //etcd服务器地址, 172.16.0.212:2379
+	ClientTls     *ClientTlsConfig `xml:"Tls"`            //
+	RegisterConf  *RegisterConf    `xml:"Register"`
+	SubScribeConf *SubscribeConf   `xml:"Subscribe"`
+}
+
+type ClientTlsConfig struct {
+	CaFilePath   string `xml:"ca,attr"`
+	CertFilePath string `xml:"cert,attr"`
+	KeyFilePath  string `xml:"key,attr"`
 }
 
 type RegisterConf struct {

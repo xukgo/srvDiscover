@@ -7,7 +7,7 @@
     <Endpoints>
         <Addr>172.16.2.13:2379</Addr>
     </Endpoints>
-
+    <Tls ca="cert/ca-etcd.pem" cert="cert/client-etcd.pem" key="cert/client-etcd.key"/>
     <Register>
         <!--服务的TimeToLive, 单位秒, 默认6-->
          <TTL>6</TTL>

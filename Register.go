@@ -59,14 +59,15 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 	var err error
 
 	for {
-		ctx, _ := context.WithTimeout(context.TODO(), regOption.ConnTimeout)
+		ctx, cancel := context.WithTimeout(context.TODO(), regOption.ConnTimeout)
 		lease, err = this.client.Grant(ctx, regOption.TTLSec)
+		cancel()
 		if err != nil || lease == nil {
 			if err != nil {
 				log.Printf("client Grant error:%s\n", err.Error())
 			}
 			regOption.ResultCallback(fmt.Errorf("client Grant error:%w", err))
-			time.Sleep(time.Second)
+			time.Sleep(time.Second * 3)
 			continue
 		}
 
@@ -75,9 +76,10 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 		if err != nil {
 			log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
 			regOption.ResultCallback(fmt.Errorf("clientUpdateLeaseContent error:%w", err))
-			connCtx, _ := context.WithTimeout(context.TODO(), time.Second*2)
+			connCtx, cancel2 := context.WithTimeout(context.TODO(), regOption.ConnTimeout)
 			_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
-			time.Sleep(time.Second)
+			cancel2()
+			time.Sleep(time.Second * 3)
 			continue
 		}
 
@@ -94,8 +96,9 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 			log.Printf("client KeepAlive error:%s\n", err.Error())
 		}
 		regOption.ResultCallback(fmt.Errorf("client KeepAlive error:%w", err))
-		connCtx, _ := context.WithTimeout(context.TODO(), time.Second*2)
+		connCtx, cancel2 := context.WithTimeout(context.TODO(), regOption.ConnTimeout)
 		_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
+		cancel2()
 		time.Sleep(time.Millisecond * 100)
 		return
 	}
@@ -145,8 +148,9 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 			if err != nil {
 				log.Printf("clientUpdateLeaseContent error:%s\n", err.Error())
 				regOption.ResultCallback(fmt.Errorf("clientUpdateLeaseContent error:%w", err))
-				connCtx, _ := context.WithTimeout(context.TODO(), time.Second*2)
+				connCtx, cancel2 := context.WithTimeout(context.TODO(), time.Second*2)
 				_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
+				cancel2()
 				//this.client.Lease.Close()
 				return
 			}

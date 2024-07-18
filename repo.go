@@ -121,11 +121,13 @@ func (this *Repo) InitFromReader(srcReader io.Reader) error {
 		return err
 	}
 	clicfg := clientv3.Config{
-		Username:    this.config.Username,
-		Password:    this.config.Password,
-		Endpoints:   this.config.Endpoints,
-		DialTimeout: time.Duration(this.config.Timeout) * time.Second,
-		TLS:         tlsConfig,
+		Username:             this.config.Username,
+		Password:             this.config.Password,
+		Endpoints:            this.config.Endpoints,
+		DialTimeout:          time.Duration(this.config.Timeout) * time.Second,
+		DialKeepAliveTime:    15 * time.Second,                                 // 每10秒发送一次心跳
+		DialKeepAliveTimeout: time.Duration(this.config.Timeout) * time.Second, // 等待心跳响应的超时时间
+		TLS:                  tlsConfig,
 	}
 	this.client, err = clientv3.New(clicfg)
 	if err != nil {

@@ -97,6 +97,7 @@ func (this *Repo) watchSubs(srvName string, srvNodeList *SubSrvNodeList, subscri
 	servicePrefix := fmt.Sprintf("/registry.%s.%s", srvNodeList.Namespace, srvName)
 
 	for {
+		log.Printf("etcd client start watch prefix:%s\n", servicePrefix)
 		watchChan := this.client.Watch(clientv3.WithRequireLeader(context.TODO()), servicePrefix, clientv3.WithPrefix())
 		if watchChan == nil {
 			time.Sleep(time.Second)

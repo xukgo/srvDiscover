@@ -59,6 +59,7 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 	var err error
 
 	for {
+		this.blockCheckServerLive(regOption)
 		ctx, cancel := context.WithTimeout(context.TODO(), regOption.ConnTimeout)
 		lease, err = this.client.Grant(ctx, regOption.TTLSec)
 		cancel()
@@ -85,6 +86,21 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 
 		//block here until recv error
 		this.KeepaliveLease(lease, srvInfo, regOption)
+	}
+}
+func (this *Repo) blockCheckServerLive(regOption *RegisterOption) {
+	for {
+		ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
+		mlist, err := this.client.MemberList(ctx)
+		cancel()
+		_ = mlist
+		if err != nil {
+			log.Printf("client MemberList error:%s\n", err.Error())
+			regOption.ResultCallback(fmt.Errorf("client MemberList error:%w", err))
+			time.Sleep(time.Second)
+			continue
+		}
+		break
 	}
 }
 

@@ -95,36 +95,42 @@ func (this *Repo) SubScribe(subSrvInfos []SubBasicInfo, subcribeOptions ...Subsc
 
 func (this *Repo) watchSubs(srvName string, srvNodeList *SubSrvNodeList, subscribeOp *SubscribeOption) {
 	servicePrefix := fmt.Sprintf("/registry.%s.%s", srvNodeList.Namespace, srvName)
+	backoff := time.Second
+	maxBackoff := 15 * time.Second
 
 	for {
 		log.Printf("etcd client start watch prefix:%s\n", servicePrefix)
 		watchChan := this.client.Watch(clientv3.WithRequireLeader(context.TODO()), servicePrefix, clientv3.WithPrefix())
-		if watchChan == nil {
-			time.Sleep(time.Second)
-			continue
-		}
 
 		//watch后必须进行一次成功的全查询
 		err := this.getAll(srvName, srvNodeList)
 		if err != nil {
+			log.Printf("etcd client Initial watch subs get all failed: %v\n", err)
 			this.client.Watcher.Close()
-			time.Sleep(time.Second)
+			time.Sleep(backoff)
+			backoff = min(backoff*2, maxBackoff)
 			continue
 		}
+
+		// Reset backoff after a successful fetch
+		backoff = time.Second
 
 		//fmt.Println("watch begin ...")
 		for watchResponse := range watchChan {
 			if watchResponse.Err() != nil {
-				log.Printf("watch event error:%s\n", watchResponse.Err())
+				log.Printf("etcd client watch event error:%s\n", watchResponse.Err())
 				this.client.Watcher.Close()
-				time.Sleep(time.Second)
+				time.Sleep(backoff)
+				backoff = min(backoff*2, maxBackoff)
 				break
 			}
 
 			this.updateByEvents(srvNodeList, watchResponse.Events)
 		}
 		//watchChan被关闭
-		//fmt.Println("watchChan closed")
+		log.Printf("etcd client  Recreating watcher for prefix: %s\n", servicePrefix)
+		time.Sleep(backoff)
+		backoff = min(backoff*2, maxBackoff)
 	}
 }
 

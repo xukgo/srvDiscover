@@ -59,7 +59,12 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 	var err error
 
 	for {
-		this.blockCheckServerLive(regOption)
+		if !this.registerEnable.Load() {
+			time.Sleep(time.Second)
+			continue
+		}
+
+		this.registerBlockCheckServerLive(regOption)
 		ctx, cancel := context.WithTimeout(context.TODO(), regOption.ConnTimeout)
 		lease, err = this.client.Grant(ctx, regOption.TTLSec)
 		cancel()
@@ -88,8 +93,11 @@ func (this *Repo) Register(srvInfo *RegisterInfo, options ...RegisterOptionFunc)
 		this.KeepaliveLease(lease, srvInfo, regOption)
 	}
 }
-func (this *Repo) blockCheckServerLive(regOption *RegisterOption) {
+func (this *Repo) registerBlockCheckServerLive(regOption *RegisterOption) {
 	for {
+		if !this.registerEnable.Load() {
+			return
+		}
 		ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
 		mlist, err := this.client.MemberList(ctx)
 		cancel()
@@ -131,6 +139,9 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 	for {
 		select {
 		case keepaliveResponse := <-keepaliveChan:
+			if !this.registerEnable.Load() {
+				return
+			}
 			//if recv nil, lease is expired
 			if keepaliveResponse == nil {
 				regOption.ResultCallback(fmt.Errorf("keepalive channle recv nil,lease is expired"))
@@ -142,6 +153,9 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 			regOption.ResultCallback(nil)
 			continue
 		default:
+			if !this.registerEnable.Load() {
+				return
+			}
 			//强制更新操作，则不进入常规判断，直接更新
 			if atomic.LoadInt32(&updateRegisterAction) > 0 {
 				atomic.StoreInt32(&updateRegisterAction, 0)

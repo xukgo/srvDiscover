@@ -10,6 +10,7 @@ require (
 	github.com/xukgo/gsaber v0.0.0-20240122025118-00910da8ce53
 	go.etcd.io/etcd/api/v3 v3.5.14
 	go.etcd.io/etcd/client/v3 v3.5.14
+	go.uber.org/atomic v1.11.0
 )
 
 require (

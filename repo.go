@@ -16,6 +16,7 @@ import (
 	"github.com/xukgo/gsaber/utils/randomUtil"
 	"github.com/xukgo/gsaber/utils/stringUtil"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.uber.org/atomic"
 	"io"
 	"os"
 	"sort"
@@ -28,9 +29,10 @@ import (
 //const DEFAULT_CONN_TIMEOUT = 1500
 
 type Repo struct {
-	locker sync.RWMutex
-	config *ConfRoot
-	client *clientv3.Client //etcd客户端
+	locker         sync.RWMutex
+	config         *ConfRoot
+	client         *clientv3.Client //etcd客户端
+	registerEnable *atomic.Bool
 
 	subsNodeCache map[string]*SubSrvNodeList
 
@@ -105,12 +107,17 @@ func ConfigUnmarshalFromReader(srcReader io.Reader) (*ConfRoot, error) {
 	return srvConf, nil
 }
 
+func (this *Repo) SetRegisterEnable(enable bool) {
+	this.registerEnable.Store(enable)
+}
+
 func (this *Repo) InitFromReader(srcReader io.Reader) error {
 	srvConf, err := ConfigUnmarshalFromReader(srcReader)
 	if err != nil {
 		return err
 	}
 
+	this.registerEnable = atomic.NewBool(true)
 	this.config = srvConf
 	this.replacePredefEndpoints()
 	this.replacePredefRegisterVersion()

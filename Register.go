@@ -113,8 +113,11 @@ func (this *Repo) registerBlockCheckServerLive(regOption *RegisterOption) {
 }
 
 func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *RegisterInfo, regOption *RegisterOption) {
-	//connCtx, _ := context.WithTimeout(context.TODO(), regOption.ConnTimeout)
-	keepaliveChan, err := this.client.KeepAlive(context.TODO(), lease.ID) //这里需要一直不断，context不允许设置超时
+	// 创建上下文和取消函数用于租约续约
+	ctx, cancel0 := context.WithCancel(context.Background())
+	defer cancel0()
+
+	keepaliveChan, err := this.client.KeepAlive(ctx, lease.ID) //这里需要一直不断，context不允许设置超时
 	if err != nil || keepaliveChan == nil {
 		if err != nil {
 			log.Printf("client KeepAlive error:%s\n", err.Error())
@@ -140,6 +143,9 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 		select {
 		case keepaliveResponse := <-keepaliveChan:
 			if !this.registerEnable.Load() {
+				connCtx, cancel2 := context.WithTimeout(context.TODO(), regOption.ConnTimeout)
+				_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
+				cancel2()
 				return
 			}
 			//if recv nil, lease is expired
@@ -154,6 +160,9 @@ func (this *Repo) KeepaliveLease(lease *clientv3.LeaseGrantResponse, srvInfo *Re
 			continue
 		default:
 			if !this.registerEnable.Load() {
+				connCtx, cancel2 := context.WithTimeout(context.TODO(), regOption.ConnTimeout)
+				_, _ = this.client.Lease.Revoke(connCtx, lease.ID)
+				cancel2()
 				return
 			}
 			//强制更新操作，则不进入常规判断，直接更新
